@@ -1,14 +1,115 @@
-﻿Get-AppxPackage *3dbuilder* | Remove-AppxPackage
-Get-AppxPackage *windowsalarms* | Remove-AppxPackage
-Get-AppxPackage *officehub* | Remove-AppxPackage
-Get-AppxPackage *skypeapp* | Remove-AppxPackage
-Get-AppxPackage *zunemusic* | Remove-AppxPackage
-Get-AppxPackage *getstarted* | Remove-AppxPackage
-Get-AppxPackage *solitairecollection* | Remove-AppxPackage
-Get-AppxPackage *bingfinance* | Remove-AppxPackage
-Get-AppxPackage *zunevideo* | Remove-AppxPackage
-Get-AppxPackage *bingnews* | Remove-AppxPackage
-Get-AppxPackage *windowsphone* | Remove-AppxPackage
-Get-AppxPackage *bingsports* | Remove-AppxPackage
-Get-AppxPackage *bingweather* | Remove-AppxPackage
-Get-AppxPackage *candy* | Remove-AppxPackage
+<#     
+    ************************************************************************************************************ 
+    Purpose:    Remove built in apps specified in list 
+    Pre-Reqs:    Windows 8.1 
+    ************************************************************************************************************ 
+#>
+
+#--------------------------------------------------------------------------------------------------------------- 
+# Main Routine 
+#---------------------------------------------------------------------------------------------------------------
+
+# Get log path. Will log to Task Sequence log folder if the script is running in a Task Sequence 
+# Otherwise log to \windows\temp
+
+try
+
+{
+
+$tsenv = New-Object -COMObject Microsoft.SMS.TSEnvironment
+
+$logPath = $tsenv.Value("LogPath")
+
+}
+
+catch
+
+{
+
+Write-Host "This script is not running in a task sequence"
+
+$logPath = $env:windir + "\temp"
+
+}
+
+$logFile = "$logPath\$($myInvocation.MyCommand).log"
+
+# Start logging
+
+Start-Transcript $logFile
+
+Write-Host "Logging to $logFile"
+
+# List of Applications that will be removed
+
+$AppsList = "microsoft.windowscommunicationsapps","Microsoft.BingNews","Microsoft.BingWeather",`
+
+"Microsoft.Windows.Photos","Microsoft.WindowsCamera","Microsoft.XboxApp",`
+
+"Microsoft.ZuneMusic","Microsoft.BingFinance","Microsoft.WindowsAlarms",`
+
+"Microsoft.SkypeApp","Microsoft.ZuneVideo","Microsoft.WindowsSoundRecorder","Microsoft.WindowsPhone",`
+
+"Microsoft.WindowsMaps","Microsoft.People","Microsoft.Office.Sway","Microsoft.Office.OneNote",`
+
+"Microsoft.MicrosoftSolitaireCollection","Microsoft.MicrosoftOfficeHub","Microsoft.Messaging",`
+
+"Microsoft.ConnectivityStore","Microsoft.CommsPhone","Microsoft.BingSports","Microsoft.AppConnector","Microsoft.3DBuilder",`
+
+"Microsoft.XboxIndentityProvider"
+
+ForEach ($App in $AppsList)
+
+{
+
+$Packages = Get-AppxPackage | Where-Object {$_.Name -eq $App}
+
+if ($Packages -ne $null)
+
+{
+
+      Write-Host "Removing Appx Package: $App"
+
+      foreach ($Package in $Packages)
+
+      {
+
+      Remove-AppxPackage -package $Package.PackageFullName
+
+      }
+
+}
+
+else
+
+{
+
+      Write-Host "Unable to find package: $App"
+
+}
+
+$ProvisionedPackage = Get-AppxProvisionedPackage -online | Where-Object {$_.displayName -eq $App}
+
+if ($ProvisionedPackage -ne $null)
+
+{
+
+      Write-Host "Removing Appx Provisioned Package: $App"
+
+      remove-AppxProvisionedPackage -online -packagename $ProvisionedPackage.PackageName
+
+}
+
+else
+
+{
+
+      Write-Host "Unable to find provisioned package: $App"
+
+}
+
+}
+
+# Stop logging
+
+Stop-Transcript
