@@ -11,3 +11,4 @@ Get-AppxPackage *bingnews* | Remove-AppxPackage
 Get-AppxPackage *windowsphone* | Remove-AppxPackage
 Get-AppxPackage *bingsports* | Remove-AppxPackage
 Get-AppxPackage *bingweather* | Remove-AppxPackage
+Get-AppxPackage *candy* | Remove-AppxPackage
